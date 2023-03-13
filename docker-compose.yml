@@ -1,0 +1,48 @@
+version: '3.9'
+services:
+  php:
+    image: yiisoftware/yii2-php:8.2-apache
+    volumes:
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      - ./:/app:delegated
+    ports:
+      - '8000:80'
+    networks:
+      - default
+    container_name: project_php
+
+  db:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes:
+      - ./tmp/db:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: yii2-docker
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - default
+    container_name: project_db
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: always
+    ports:
+      - 9001:80
+    networks:
+      - default
+    environment:
+      - PMA_ARBITRARY=1
+    container_name: project_phpmyadmin
+
+  app:
+    build:
+      context: .
+      dockerfile: ./_docker/Dockerfile
+    networks:
+      - default
+    volumes:
+      - ./:/var/www
+    container_name: project_app
+    depends_on:
+      - db
