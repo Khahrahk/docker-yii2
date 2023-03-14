@@ -16,7 +16,8 @@ class GroupForm extends Model
         ];
     }
 
-    public function getGroupBy($groupby){
+    public function getGroupBy($groupby)
+    {
         return $groupby;
     }
 }

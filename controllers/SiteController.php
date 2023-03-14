@@ -128,22 +128,19 @@ class SiteController extends Controller
             $model_var = $model->attributes = Yii::$app->request->post('GroupForm');
             $res_model = $model_var['groupby'];
 
-            if($res_model == "0"){
+            if ($res_model == "0") {
                 $query = Person::find()->joinWith('number')->orderBy([
                     'Full_name' => SORT_ASC
                 ]);
-            }
-            elseif($res_model == "1"){
+            } elseif ($res_model == "1") {
                 $query = Person::find()->joinWith('number')->orderBy([
                     'DOB' => SORT_ASC
                 ]);
-            }
-            elseif($res_model == "2"){
+            } elseif ($res_model == "2") {
                 $query = Person::find()->joinWith('number')->orderBy([
                     'Location' => SORT_ASC
                 ]);
-            }
-            else{
+            } else {
                 $query = Person::find()->joinWith('number');
             }
             $pages = new Pagination(['totalCount' => $query->count(), 'pageSize' => 4, 'forcePageParam' => true, 'pageSizeParam' => false]);
