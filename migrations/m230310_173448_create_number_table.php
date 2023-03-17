@@ -14,11 +14,11 @@ class m230310_173448_create_number_table extends Migration
     {
         $this->createTable('{{%number}}', [
             'id' => $this->primaryKey(),
-            'PersonId' => $this->integer()->notNull(),
-            'number' => $this->string()->notNull(),
+            'personId' => $this->integer()->notNull(),
+            'number' => $this->string(256)->notNull(),
         ]);
 
-        $this->addForeignKey('fk_person_number', 'number', 'PersonId', 'person', 'id');
+        $this->addForeignKey('fk_person_number', 'number', 'personId', 'person', 'id');
     }
 
     /**

@@ -32,9 +32,11 @@ use yii\helpers\Html;
 </div>
 <br><br>
 <div class="row">
+
     <div class="panel-heading col-3">ФИО</div>
     <div class="panel-heading col-2">Дата рождения</div>
     <div class="panel-heading col-6">Действия</div>
+
 </div>
 <hr class="hr_numbers"><br>
 <?php
@@ -48,36 +50,15 @@ foreach ($model as $item) {
     echo '<span>' . Html::a('Редактировать', ['postedit', 'id' => $item->id], ['class' => 'btn btn-secondary', 'style' => 'margin-left: 5px']) . '</span>';
     echo '<span>' . Html::a('Удалить', ['postdelete', 'id' => $item->id], ['class' => 'btn btn-danger', 'style' => 'margin-left: 5px']) . '</span>';
     echo "</div>";
-    echo "</div>";
-    echo '<br>';
-    echo '<hr class="hr_numbers" style="opacity: 10%">';
+    echo '</div>';
+    echo '<br><br>';
+    echo '<hr class="hr_numbers"><br>';
 }
 ?>
 <br><br>
 <div class="row">
     <div class="col-4"></div>
     <div class="col-4">
-        <?php
-        echo \yii\widgets\LinkPager::widget([
-            'pagination' => $pagination,
-            'hideOnSinglePage' => true,
-            'prevPageLabel' => '&laquo; назад',
-            'nextPageLabel' => 'далее &raquo;',
-            'maxButtonCount' => 3,
-
-            // Настройки контейнера пагинации
-            'options' => [
-                'tag' => 'nav',
-                'class' => 'pagination',
-                'id' => 'pager-container',
-            ],
-
-            // Настройки классов css для ссылок
-            'linkOptions' => ['class' => 'page-link'],
-            'activePageCssClass' => 'active',
-            'disabledPageCssClass' => 'page-link',
-        ])
-        ?>
     </div>
     <div class="col-4"></div>
 </div>

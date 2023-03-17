@@ -14,9 +14,10 @@ class m230310_091439_create_person_table extends Migration
     {
         $this->createTable('{{%person}}', [
             'id' => $this->primaryKey(),
-            'Full_name' => $this->string()->notNull(),
-            'DOB' => $this->dateTime(),
-            'Location' => $this->text(),
+            'fullName' => $this->string(256)->notNull(),
+            'date' => $this->dateTime(),
+            'location' => $this->string(256),
+            'personGroup' => $this->string(256)->defaultValue(0),
         ]);
     }
 

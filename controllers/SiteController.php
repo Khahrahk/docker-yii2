@@ -3,17 +3,19 @@
 namespace app\controllers;
 
 use app\models\GroupForm;
+use app\models\Groups;
 use app\models\Number;
+use app\models\PostForm;
+use app\models\LoginForm;
 use app\models\Person;
-use http\Params;
+use app\models\RegisterForm;
 use Yii;
+use yii\data\Pagination;
+use yii\data\Sort;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\Response;
-use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
-use yii\data\Pagination;
 
 class SiteController extends Controller
 {
@@ -77,7 +79,75 @@ class SiteController extends Controller
      */
     public function actionLogin()
     {
-        return $this->render('index');
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $model = new LoginForm();
+        if ($model->load(Yii::$app->request->post())) {
+            if ($user = $model->login()) {
+                return $this->goHome();
+            }
+        }
+        return $this->render('login', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionRegister()
+    {
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $model = new RegisterForm();
+        if ($model->load(Yii::$app->request->post())) {
+            if ($user = $model->register()) {
+                if (Yii::$app->getUser()->login($user)) {
+                    return $this->goHome();
+                }
+            }
+        }
+        return $this->render('register', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionProfile()
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+
+        return $this->render('profile', [
+
+        ]);
+    }
+
+    public function actionAdmin()
+    {
+        if (!Yii::$app->user->isGuest && Yii::$app->user->identity->isAdmin == 1) {
+
+            $query = Groups::find();
+            $count = $query->count();
+            $pagination = new Pagination(['totalCount' => $count, 'pageSize' => 4]);
+            $sort = new Sort([
+                'attributes' => [
+                    'id' => [
+                        'label' => 'id'
+                    ],
+                    'name' => [
+                        'label' => 'Группа'
+                    ],
+                ]
+            ]);
+            $model = $query
+                ->orderBy($sort->orders)
+                ->offset($pagination->offset)
+                ->limit($pagination->limit)
+                ->all();
+            return $this->render('admin', ['pagination' => $pagination, 'model' => $model, 'sort' => $sort]);
+        } else {
+            return $this->goHome();
+        }
     }
 
     /**
@@ -92,76 +162,188 @@ class SiteController extends Controller
         return $this->goHome();
     }
 
-    /**
-     * Displays contact page.
-     *
-     * @return Response|string
-     */
-    public function actionContact()
+    public function actionNumbers()
     {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
         }
-        return $this->render('contact', [
+        $query = Person::find()->joinWith('number')->joinWith('groups');
+        $count = $query->count();
+        $pagination = new Pagination(['totalCount' => $count, 'pageSize' => 4]);
+        $sort = new Sort([
+            'attributes' => [
+                'fullName' => [
+                    'label' => 'Имя'
+                ],
+                'date' => [
+                    'label' => 'Дата рождения'
+                ],
+                'location' => [
+                    'label' => 'Местонахождение'
+                ],
+                'number'
+            ]
+        ]);
+        $model = $query
+            ->orderBy($sort->orders)
+            ->offset($pagination->offset)
+            ->limit($pagination->limit)
+            ->all();
+        return $this->render('numbers', ['pagination' => $pagination, 'model' => $model, 'sort' => $sort]);
+    }
+
+    public function actionSearch()
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $q = Yii::$app->request->get('q');
+        $query = Person::find()
+            ->where(['like', 'fullName', $q])
+            ->joinWith('number');
+        $count = $query->count();
+        $pagination = new Pagination(['totalCount' => $count, 'pageSize' => 4]);
+        $sort = new Sort([
+            'attributes' => [
+                'fullName' => [
+                    'label' => 'Имя'
+                ],
+                'date' => [
+                    'label' => 'Дата рождения'
+                ],
+                'location' => [
+                    'label' => 'Местонахождение'
+                ],
+                'number'
+            ]
+        ]);
+        $model = $query
+            ->orderBy($sort->orders)
+            ->offset($pagination->offset)
+            ->limit($pagination->limit)
+            ->all();
+        return $this->render('search', ['pagination' => $pagination, 'model' => $model, 'sort' => $sort]);
+    }
+
+    public function actionPostcreate()
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $model = new PostForm();
+        if ($model->load(Yii::$app->request->post())) {
+            if ($model->create()) {
+                return $this->redirect(['numbers']);
+            }
+        }
+        return $this->render('post/create', [
             'model' => $model,
         ]);
     }
 
-    /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
+    public function actionPostview($id)
     {
-        return $this->render('about');
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $query_person = Person::findOne($id);
+        $query_groups = Person::find()->leftJoin('groups', 'person.personGroup = groups.id')->where(['person.id' => $id])->with('groups')->one();
+        return $this->render('post/view', [
+            'query' => $query_person,
+            'query1' => $query_groups,
+        ]);
     }
 
-    public function actionNumbers()
+    public function actionPostdelete($id)
     {
-        $model = new GroupForm();
-        $model->load(Yii::$app->request->post());
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            $model_var = $model->attributes = Yii::$app->request->post('GroupForm');
-            $res_model = $model_var['groupby'];
-
-            if ($res_model == "0") {
-                $query = Person::find()->joinWith('number')->orderBy([
-                    'Full_name' => SORT_ASC
-                ]);
-            } elseif ($res_model == "1") {
-                $query = Person::find()->joinWith('number')->orderBy([
-                    'DOB' => SORT_ASC
-                ]);
-            } elseif ($res_model == "2") {
-                $query = Person::find()->joinWith('number')->orderBy([
-                    'Location' => SORT_ASC
-                ]);
-            } else {
-                $query = Person::find()->joinWith('number');
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        if (!empty(Person::findOne($id))) {
+            if (!empty(Number::findOne($id))) {
+                Number::findOne($id)->delete();
             }
-            $pages = new Pagination(['totalCount' => $query->count(), 'pageSize' => 4, 'forcePageParam' => true, 'pageSizeParam' => false]);
-            $posts = $query->offset($pages->offset)
-//                ->limit($pages->limit)
-                ->all();
-            return $this->render('numbers', compact(
-                'posts',
-//                'pages',
-                'model',
-                'res_model'));
+            Person::findOne($id)->delete();
+            return $this->redirect(['numbers']);
         } else {
-            $query = Person::find()->joinWith('number');
-            $pages = new Pagination(['totalCount' => $query->count(), 'pageSize' => 4, 'forcePageParam' => false, 'pageSizeParam' => false]);
-            $posts = $query->offset($pages->offset)
-//                ->limit($pages->limit)
-                ->all();
-            return $this->render('numbers', compact(
-                'posts',
-//                'pages',
-                'model'));
+            return $this->goHome();
+        }
+    }
+
+    public function actionPostedit($id)
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $query_person = Person::findOne($id);
+        $query_number = Number::findOne($id);
+        if ($query_person->load(Yii::$app->request->post())) {
+            //не совсем понял как связанные массивы в yii сохранять, но так вроде получается
+            $query_person->fullName = Yii::$app->request->post()['Person']['fullName'];
+            $query_person->date = Yii::$app->request->post()['Person']['date'];
+            $query_person->location = Yii::$app->request->post()['Person']['location'];
+            $query_person->personGroup = Yii::$app->request->post()['Person']['personGroup'];
+            $query_number->number = Yii::$app->request->post()['Number']['number'];
+
+
+            if ($query_person->save() && $query_number->save()) {
+                return $this->redirect(['numbers']);
+            }
+        } else {
+            return $this->render('post/edit', [
+                'model' => $query_person,
+            ]);
+        }
+    }
+
+
+    public function actionGroupcreate()
+    {
+        if (!Yii::$app->user->isGuest && Yii::$app->user->identity->isAdmin == 1) {
+            $model = new GroupForm();
+            if ($model->load(Yii::$app->request->post())) {
+                if ($model->create()) {
+                    return $this->redirect(['admin']);
+                }
+            }
+            return $this->render('admin/create', [
+                'model' => $model,
+            ]);
+        } else {
+            return $this->goHome();
+        }
+    }
+
+    public function actionGroupdelete($id)
+    {
+        if (!Yii::$app->user->isGuest && Yii::$app->user->identity->isAdmin == 1) {
+            $query = Groups::findOne($id)->delete();
+            if ($query) {
+                return $this->redirect(['admin']);
+            }
+        } else {
+            return $this->goHome();
+        }
+    }
+
+    public function actionGroupedit($id)
+    {
+        if (!Yii::$app->user->isGuest && Yii::$app->user->identity->isAdmin == 1) {
+            $query = Groups::findOne($id);
+            if ($query->load(Yii::$app->request->post())) {
+                $query->id = $id;
+                $query->name = Yii::$app->request->post()['Groups']['name'];
+
+                if ($query->save()) {
+                    return $this->redirect(['admin']);
+                }
+            } else {
+                return $this->render('admin/edit', [
+                    'model' => $query,
+                ]);
+            }
+        } else {
+            return $this->goHome();
         }
     }
 }

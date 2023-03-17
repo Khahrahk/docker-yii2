@@ -3,17 +3,17 @@
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 
-/** @var app\models\LoginForm $model */
+/** @var \app\models\GroupForm $model */
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 
-$this->title = 'Login';
+$this->title = 'Group Create';
 ?>
 <div class="site-login">
-    <h1>Вход</h1>
+    <h1>Создание группы</h1>
 
-    <p>Пожалуйста, заполните поля для входа:</p>
+    <p>Пожалуйста, заполните поля для создания:</p>
 
     <?php $form = ActiveForm::begin([
         'id' => 'login-form',
@@ -26,14 +26,9 @@ $this->title = 'Login';
         ],
     ]); ?>
 
-    <?= $form->field($model, 'login')->textInput(['autofocus' => true]) ?>
-    <?= $form->field($model, 'password')->passwordInput() ?>
-    <?= $form->field($model, 'rememberMe')->checkbox([
-        'template' => "<div class=\"custom-control custom-checkbox\">{input} {label}</div>\n<div class=\"col-lg-8\">{error}</div>",
-    ]) ?>
-
+    <?= $form->field($model, 'name') ?>
     <div class="form-group">
-        <?= Html::submitButton('Войти', ['class' => 'btn btn-primary', 'name' => 'login-button']) ?>
+        <?= Html::submitButton('Создать', ['class' => 'btn btn-primary', 'name' => 'login-button']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

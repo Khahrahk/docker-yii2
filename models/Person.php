@@ -8,6 +8,10 @@ use yii\db\ActiveRecord;
 class Person extends ActiveRecord
 {
 
+    /**
+     * @var mixed|null
+     */
+
     public static function tableName()
     {
         return 'person';
@@ -15,6 +19,11 @@ class Person extends ActiveRecord
 
     public function getNumber()
     {
-        return $this->hasMany(Number::className(), ['PersonId' => 'id']);
+        return $this->hasMany(Number::className(), ['personId' => 'id']);
+    }
+
+    public function getGroups()
+    {
+        return $this->hasOne(Groups::className(), ['id' => 'personGroup']);
     }
 }
