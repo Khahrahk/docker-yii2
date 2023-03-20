@@ -35,10 +35,7 @@ class GroupForm extends Model
 
     public function create()
     {
-        $count = Groups::find()->orderBy(['id' => SORT_DESC])->one();
-        $count = $count['id'] + 1;
         $Group = new Groups();
-        $Group->id = $count;
         $Group->name = $this->name;
         return $Group->save() ? $Group : null;
     }

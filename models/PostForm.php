@@ -45,21 +45,21 @@ class PostForm extends Model
 
     public function create()
     {
-        $count = Person::find()->orderBy(['id' => SORT_DESC])->one();
-        if(!empty($count)){
-            $count = $count['id'] + 1;
-        } else {
-            $count = 1;
-        }
         $Person = new Person();
         $Number = new Number();
         $Person->fullName = $this->fullName;
         $Person->date = $this->date;
         $Person->location = $this->location;
         $Number->number = $this->number;
+        $Person->personGroup = $this->personGroup + 1;
+        $Person->save();
+        $count = Person::find()->orderBy(['id' => SORT_DESC])->one();
+        if(!empty($count)){
+            $count = $count['id'];
+        } else {
+            $count = 1;
+        }
         $Number->personId = $count;
-        $Person->personGroup = $this->personGroup;
-
-        return $Person->save() && $Number->save() ? $Person && $Number : null;
+        $Number->save();
     }
 }
